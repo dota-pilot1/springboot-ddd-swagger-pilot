@@ -51,19 +51,21 @@ public class RoleJpaEntity {
     }
 
     /**
-     * 역할에 권한 추가
+     * 역할에 권한 추가 (LazyInitializationException 방지)
      */
     public void addAuthority(AuthorityJpaEntity authority) {
         this.authorities.add(authority);
-        authority.getRoles().add(this);
+        // LazyInitializationException 방지를 위해 양방향 매핑 제거
+        // authority.getRoles().add(this);
     }
 
     /**
-     * 역할에서 권한 제거
+     * 역할에서 권한 제거 (LazyInitializationException 방지)
      */
     public void removeAuthority(AuthorityJpaEntity authority) {
         this.authorities.remove(authority);
-        authority.getRoles().remove(this);
+        // LazyInitializationException 방지를 위해 양방향 매핑 제거
+        // authority.getRoles().remove(this);
     }
 
     /**
