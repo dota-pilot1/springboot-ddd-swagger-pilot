@@ -1,7 +1,10 @@
 package com.example.chatbot.member.infrastructure.persistence.jpa.entity;
 
+import com.example.chatbot.auth.infrastructure.persistence.jpa.entity.MemberRoleJpaEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "members", indexes = {@Index(columnList = "email", name = "idx_members_email")})
@@ -20,21 +23,26 @@ public class MemberJpaEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String role;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MemberRoleJpaEntity> memberRoles = new HashSet<>();
+
     protected MemberJpaEntity() {}
 
-    public MemberJpaEntity(Long id, String email, String password, String name, String role, LocalDateTime createdAt) {
+    public MemberJpaEntity(Long id, String email, String password, String name, LocalDateTime createdAt) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.name = name;
-        this.role = role;
         this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
+    }
+
+    // 하위 호환성을 위한 생성자 (기존 role 파라미터 무시)
+    @Deprecated
+    public MemberJpaEntity(Long id, String email, String password, String name, String role, LocalDateTime createdAt) {
+        this(id, email, password, name, createdAt);
     }
 
     // getters/setters for JPA
@@ -46,8 +54,20 @@ public class MemberJpaEntity {
     public void setPassword(String password) { this.password = password; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Set<MemberRoleJpaEntity> getMemberRoles() { return memberRoles; }
+    public void setMemberRoles(Set<MemberRoleJpaEntity> memberRoles) { this.memberRoles = memberRoles; }
+
+    // 하위 호환성을 위한 메소드들
+    @Deprecated
+    public String getRole() { 
+        // 첫 번째 역할 반환 (기존 코드 호환성)
+        return memberRoles.isEmpty() ? "ROLE_USER" : "ROLE_" + memberRoles.iterator().next().getRole().getName();
+    }
+
+    @Deprecated
+    public void setRole(String role) {
+        // 기존 코드 호환성을 위해 빈 메소드로 유지
+    }
 }

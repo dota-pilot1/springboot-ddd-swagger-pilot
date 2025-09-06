@@ -1,5 +1,6 @@
 package com.example.chatbot.config;
 
+import com.example.chatbot.auth.infrastructure.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -12,8 +13,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true) // @PreAuthorize, @PostAuthorize 활성화
 public class SecurityConfig {
+
+    private final CustomUserDetailsService customUserDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+        this.customUserDetailsService = customUserDetailsService;
+    }
 
     @Bean
     @Order(1)
@@ -48,22 +55,30 @@ public class SecurityConfig {
 
             // 요청별 접근 제어 설정
             .authorizeHttpRequests(auth -> auth
-                // permitAll로 지정한 경로는 인증 없이 접근 허용
+                // 공개 엔드포인트
                 .requestMatchers(
-                    "/actuator/**",          // 헬스체크/메트릭 등
+                    "/actuator/**",
                     "/favicon.ico",
                     "/",
                     "/index.html",
                     "/static/**",
-                    "/ws/**",               // WebSocket 엔드포인트(공개인 경우)
-                    "/stomp/**",            // STOMP 관련 경로
-                    "/api/auth/**"          // 인증 관련(회원가입/로그인) 공개 엔드포인트
+                    "/ws/**",
+                    "/stomp/**",
+                    "/api/auth/**"
                 ).permitAll()
-                // 위에 해당하지 않는 모든 요청은 인증 필요
+                
+                // 권한별 접근 제어 예시
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
+                .requestMatchers("/api/user/**").hasRole("USER")
+                
+                // 세분화된 권한 제어 예시
+                .requestMatchers("/api/posts").hasAuthority("AUTHORITY_READ_POST")
+                .requestMatchers("/api/posts/**").hasAuthority("AUTHORITY_WRITE_POST")
+                
                 .anyRequest().authenticated()
             )
-
-            // 간단하게 HTTP Basic 인증을 사용하도록 설정(개발/테스트용)
+            .userDetailsService(customUserDetailsService) // 커스텀 UserDetailsService 사용
             .httpBasic(Customizer.withDefaults());
 
         return http.build();
