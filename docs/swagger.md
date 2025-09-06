@@ -11,7 +11,7 @@
 - 대상: `@RestController` + `@RequestMapping/@GetMapping/@PostMapping` 등으로 매핑된 핸들러 메서드
 - 원리: springdoc이 스프링 MVC 핸들러 맵핑을 스캔해 Operation을 생성하고, 요청/응답 타입을 바탕으로 스키마를 생성
 - DTO 스키마: 요청/응답 DTO의 필드, Bean Validation(@NotBlank, @Email, @Size 등) 메타데이터가 스키마 제약으로 반영됨
-- 서비스 계층: 문서화 대상이 아님(문서는 Web 레이어 기준). 서비스는 컨트롤러 내부 구현 세부로 취급됨
+- 서비스 계층: 문서화 대상이 아님(문서는 Web 1레이어 기준). 서비스는 컨트롤러 내부 구현 세부로 취급됨
 
 ## 최소 사용법(주석만 추가하면 됨)
 컨트롤러 메서드 위에 메타데이터 주석을 붙여 문서를 풍부하게 할 수 있음.

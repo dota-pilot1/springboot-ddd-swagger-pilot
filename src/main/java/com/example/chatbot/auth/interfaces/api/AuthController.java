@@ -1,5 +1,8 @@
-package com.example.chatbot.member.interfaces.api;
+package com.example.chatbot.auth.interfaces.api;
 
+import com.example.chatbot.auth.application.AuthService;
+import com.example.chatbot.auth.interfaces.dto.LoginRequest;
+import com.example.chatbot.auth.interfaces.dto.LoginResponse;
 import com.example.chatbot.member.application.MemberService;
 import com.example.chatbot.member.infrastructure.persistence.jpa.entity.MemberJpaEntity;
 import com.example.chatbot.member.interfaces.api.dto.MemberSignupRequest;
@@ -17,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final MemberService memberService;
+    private final AuthService authService;
 
-    public AuthController(MemberService memberService) {
+    public AuthController(MemberService memberService, AuthService authService) {
         this.memberService = memberService;
+        this.authService = authService;
     }
 
     @PostMapping("/signup")
@@ -27,5 +32,24 @@ public class AuthController {
         MemberJpaEntity saved = memberService.signup(request.getEmail(), request.getPassword(), request.getName());
         MemberSignupResponse resp = new MemberSignupResponse(saved.getId(), saved.getEmail(), saved.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            String token = authService.login(request.getEmail(), request.getPassword());
+            MemberJpaEntity member = authService.findMemberByEmail(request.getEmail());
+            
+            LoginResponse response = new LoginResponse(
+                token,
+                member.getId(),
+                member.getEmail(),
+                member.getName()
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }
